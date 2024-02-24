@@ -4,8 +4,9 @@ pipeline {
             label 'AGENT-1'
         }
     }
-    // environment { 
-    //     GREETING = 'Hello Jenkins'
+     environment { 
+        packageVersion = ''
+        nexusURL = '172.31.13.40:8081'
     }
     options {
         timeout(time: 1, unit: 'HOURS')
@@ -16,7 +17,7 @@ pipeline {
 
     //     text(name: 'BIOGRAPHY', defaultValue: '', description: 'Enter some information about the person')
 
-    //     booleanParam(name: 'TOGGLE', defaultValue: true, description: 'Toggle this value')
+       booleanParam(name: 'TOGGLE', defaultValue: true, description: 'Toggle this value')
 
     //     choice(name: 'CHOICE', choices: ['One', 'Two', 'Three'], description: 'Pick something')
 
@@ -24,25 +25,33 @@ pipeline {
     // }
     // build
     stages {
-        stage('clone') {
+         stage('Get the version') {
             steps {
-                echo 'Building..'
+                script {
+                    def packageJson = readJSON file: 'package.json'
+                    packageVersion = packageJson.version
+                    echo "application version: $packageVersion"
+                }
             }
         }
-        stage('Test') {
-            steps {
-                echo 'Testing..'
-            }
-        }
-        stage('Deploy') {
+        stage('Install dependencies') {
             steps {
                 sh """
-                    echo  "Here I wrote shell script"
-                    echo "$GREETING"
-                    #sleep 10
+                    npm install
                 """
             }
         }
+
+        stage('Build') {
+            steps {
+                sh """
+                    ls -la
+                    zip -q -r catalogue.zip ./* -x ".git" -x "*.zip"
+                    ls -ltr
+                """
+            }
+        }
+        
         stage('check params'){
             steps{
                 sh """
